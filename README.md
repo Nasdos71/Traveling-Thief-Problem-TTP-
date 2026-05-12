@@ -122,13 +122,3 @@ Distances are Euclidean, rounded up. Speed decreases linearly from `maxSpeed` (e
 - Polyakovskiy, S., et al. — TTP benchmark set and problem context.
 - Course brief: Project 26 — Traveling Thief Problem.
 
----
-
-## Authors / submission
-
-Fill in group member names, IDs, and submission date before turning in.
-
-| Name | Student ID | Contribution |
-|------|------------|----------------|
-|      |            |              |
-|      |            |              |
