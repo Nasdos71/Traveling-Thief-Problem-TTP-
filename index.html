@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Traveling Thief Problem (TTP) Solver — Interactive visualization of TSP + Knapsack coupling with multiple heuristic strategies.">
+  <title>TTP Solver — Traveling Thief Problem</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%236366f1'/%3E%3Cpath fill='white' d='M8 22 L16 10 L24 22 Z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <div class="app-top-bar">
+      <button type="button" id="btn-open-ttp-maker" class="btn btn-secondary btn-ttp-maker">
+        ✏️ TTP Maker
+      </button>
+    </div>
+
+    <!-- ══════ Header ══════ -->
+    <header class="app-header">
+      <h1>🗺️ Traveling Thief Problem</h1>
+      <p class="subtitle">
+        Interactive solver combining TSP + 0/1 Knapsack with velocity coupling.
+        Compare brute force, greedy, DP, 2-opt, and divide &amp; conquer strategies.
+      </p>
+    </header>
+
+    <!-- ══════ Upload & Sample Selection ══════ -->
+    <section class="upload-section">
+      <div class="card">
+        <div class="card-title"><span class="icon">📂</span> Load Instance File</div>
+        <div class="upload-zone" id="upload-zone">
+          <span class="upload-icon">📄</span>
+          <p class="upload-text">
+            <strong>Drop a .ttp file here</strong> or click to browse
+          </p>
+        </div>
+        <input type="file" id="file-input" accept=".ttp,.txt" hidden>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📦</span> Built-in Samples</div>
+        <div class="sample-selector">
+          <label>Five built-in benchmark instances (load one, then run algorithms):</label>
+          <div class="sample-grid">
+          <button class="sample-btn" data-file="sample_small.ttp">
+            <span>🔬</span>
+            <span>#1 Small</span>
+            <span class="badge badge-small">5 · 6</span>
+          </button>
+          <button class="sample-btn" data-file="benchmark_04.ttp">
+            <span>📐</span>
+            <span>#2 10 cities</span>
+            <span class="badge badge-medium">10 · 12</span>
+          </button>
+          <button class="sample-btn" data-file="benchmark_05.ttp">
+            <span>📐</span>
+            <span>#3 12 cities</span>
+            <span class="badge badge-medium">12 · 18</span>
+          </button>
+          <button class="sample-btn" data-file="sample_medium.ttp">
+            <span>📊</span>
+            <span>#4 Medium</span>
+            <span class="badge badge-medium">15 · 20</span>
+          </button>
+          <button class="sample-btn" data-file="sample_large.ttp">
+            <span>🌐</span>
+            <span>#5 Large</span>
+            <span class="badge badge-large">30 · 45</span>
+          </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════ Instance Info Bar ══════ -->
+    <div class="instance-info" id="instance-info">
+      <div class="info-chip">
+        <div class="info-label">Instance</div>
+        <div class="info-value" id="info-name" style="font-size:0.85rem;">—</div>
+      </div>
+      <div class="info-chip">
+        <div class="info-label">Cities</div>
+        <div class="info-value" id="info-cities">—</div>
+      </div>
+      <div class="info-chip">
+        <div class="info-label">Items</div>
+        <div class="info-value" id="info-items">—</div>
+      </div>
+      <div class="info-chip">
+        <div class="info-label">Capacity</div>
+        <div class="info-value" id="info-capacity">—</div>
+      </div>
+      <div class="info-chip">
+        <div class="info-label">Speed Range</div>
+        <div class="info-value" id="info-speed" style="font-size:0.9rem;">—</div>
+      </div>
+      <div class="info-chip">
+        <div class="info-label">Rent Rate</div>
+        <div class="info-value" id="info-rent">—</div>
+      </div>
+    </div>
+
+    <!-- ══════ Controls ══════ -->
+    <div class="controls">
+      <button class="btn btn-success algo-btn" id="btn-run-all" disabled>
+        🚀 Run All &amp; Compare
+      </button>
+      <button class="btn btn-secondary algo-btn" id="btn-brute-force" disabled>
+        🔬 Brute Force
+      </button>
+      <button class="btn btn-secondary algo-btn" id="btn-greedy-dp" disabled>
+        🧩 Greedy NN + DP
+      </button>
+      <button class="btn btn-secondary algo-btn" id="btn-greedy-greedy" disabled>
+        ⚡ Greedy NN + Greedy Items
+      </button>
+      <button class="btn btn-secondary algo-btn" id="btn-two-opt" disabled>
+        🔧 2-Opt + DP
+      </button>
+      <button class="btn btn-secondary algo-btn" id="btn-divide-conquer" disabled>
+        🗂️ Divide &amp; Conquer
+      </button>
+
+      <select id="solution-selector" class="btn btn-secondary" style="display:none; min-width:250px;">
+      </select>
+    </div>
+
+    <!-- ══════ Tabs ══════ -->
+    <div class="tabs-container">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="map">🗺️ Tour Map</button>
+        <button class="tab-btn" data-tab="timeline">📊 Item Timeline</button>
+        <button class="tab-btn" data-tab="scatter">📈 Profit vs Weight</button>
+        <button class="tab-btn" data-tab="enumeration">📋 Enumeration Table</button>
+        <button class="tab-btn" data-tab="comparison">🏆 Strategy Comparison</button>
+      </div>
+
+      <!-- Tab 1: Tour Map -->
+      <div class="tab-panel active" id="panel-map">
+        <div class="card">
+          <div class="card-title"><span class="icon">🗺️</span> City Tour Map</div>
+          <div class="map-container">
+            <canvas id="tour-map-canvas"></canvas>
+          </div>
+          <div class="map-legend">
+            <div class="map-legend-item">
+              <span class="legend-dot" style="background:#6366f1;"></span> Start City
+            </div>
+            <div class="map-legend-item">
+              <span class="legend-dot" style="background:#f59e0b;"></span> Item Collected
+            </div>
+            <div class="map-legend-item">
+              <span class="legend-dot" style="background:#64748b;"></span> No Items
+            </div>
+            <div class="map-legend-item">
+              <span class="legend-dot" style="background:#00c850;"></span> Fast (light load)
+            </div>
+            <div class="map-legend-item">
+              <span class="legend-dot" style="background:#ff3030;"></span> Slow (heavy load)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Item Collection Timeline -->
+      <div class="tab-panel" id="panel-timeline">
+        <div class="card">
+          <div class="card-title"><span class="icon">📊</span> Item Collection Timeline</div>
+          <div class="chart-wrapper" style="min-height:400px;">
+            <canvas id="timeline-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Profit vs Weight Scatter -->
+      <div class="tab-panel" id="panel-scatter">
+        <div class="card">
+          <div class="card-title"><span class="icon">📈</span> Profit vs Weight Trade-off</div>
+          <div class="chart-wrapper" style="min-height:400px;">
+            <canvas id="scatter-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Brute-Force Enumeration Table -->
+      <div class="tab-panel" id="panel-enumeration">
+        <div class="card">
+          <div class="card-title"><span class="icon">📋</span> Brute-Force Enumeration</div>
+          <div id="enumeration-container">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <p>Run brute force on a small instance (≤5 cities, ≤6 items) to see the full enumeration.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Strategy Comparison -->
+      <div class="tab-panel" id="panel-comparison">
+        <div class="card">
+          <div class="card-title"><span class="icon">🏆</span> Strategy Comparison</div>
+          <div id="comparison-container">
+            <div class="empty-state">
+              <div class="empty-icon">🏆</div>
+              <p>Run algorithms to compare strategies.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ Algorithm Log ══════ -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🖥️</span> Algorithm Log</div>
+      <div class="log-panel" id="log-panel"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════ TTP Maker (modal) ══════ -->
+  <dialog id="ttp-maker-dialog" class="ttp-maker-dialog">
+    <div class="ttp-maker-inner card">
+      <div class="ttp-maker-head">
+        <h2 class="ttp-maker-title">TTP Maker</h2>
+        <button type="button" class="btn btn-secondary" id="maker-btn-close" aria-label="Close">✕</button>
+      </div>
+      <p class="ttp-maker-intro">
+        Edit cities and items, then <strong>Apply to solver</strong> or <strong>Download .ttp</strong>. City <strong>1</strong> is the start depot. Item lines must reference existing city IDs.
+      </p>
+
+      <div class="ttp-maker-grid">
+        <label class="ttp-maker-field">Problem name
+          <input type="text" id="maker-name" class="ttp-maker-input" placeholder="my_instance" autocomplete="off">
+        </label>
+        <label class="ttp-maker-field">Knapsack capacity
+          <input type="number" id="maker-capacity" class="ttp-maker-input" min="1" step="1" value="100">
+        </label>
+        <label class="ttp-maker-field">Min speed
+          <input type="number" id="maker-min-speed" class="ttp-maker-input" min="0.01" step="any" value="0.1">
+        </label>
+        <label class="ttp-maker-field">Max speed
+          <input type="number" id="maker-max-speed" class="ttp-maker-input" min="0.01" step="any" value="1.0">
+        </label>
+        <label class="ttp-maker-field">Renting ratio
+          <input type="number" id="maker-rent" class="ttp-maker-input" min="0" step="any" value="0.5">
+        </label>
+      </div>
+
+      <div class="ttp-maker-actions-bar">
+        <button type="button" class="btn btn-secondary" id="maker-btn-starter">Reset to starter (3 cities, 2 items)</button>
+        <button type="button" class="btn btn-secondary" id="maker-btn-from-loaded">Fill from loaded instance</button>
+      </div>
+
+      <div class="ttp-maker-section">
+        <div class="ttp-maker-section-head">
+          <span class="ttp-maker-section-title">Cities</span>
+          <button type="button" class="btn btn-secondary" id="maker-add-city">+ Add city</button>
+        </div>
+        <div class="ttp-maker-table-wrap">
+          <table class="ttp-maker-table">
+            <thead>
+              <tr><th>ID</th><th>X</th><th>Y</th><th></th></tr>
+            </thead>
+            <tbody id="maker-cities-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="ttp-maker-section">
+        <div class="ttp-maker-section-head">
+          <span class="ttp-maker-section-title">Items</span>
+          <button type="button" class="btn btn-secondary" id="maker-add-item">+ Add item</button>
+        </div>
+        <div class="ttp-maker-table-wrap">
+          <table class="ttp-maker-table">
+            <thead>
+              <tr><th>ID</th><th>Profit</th><th>Weight</th><th>City ID</th><th></th></tr>
+            </thead>
+            <tbody id="maker-items-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="ttp-maker-footer-btns">
+        <button type="button" class="btn btn-secondary" id="maker-btn-close-footer">Cancel</button>
+        <button type="button" class="btn btn-secondary" id="maker-btn-download">⬇ Download .ttp</button>
+        <button type="button" class="btn btn-success" id="maker-btn-apply">✓ Apply to solver</button>
+      </div>
+    </div>
+  </dialog>
+
+  <template id="tpl-maker-city">
+    <tr>
+      <td><input type="number" class="ttp-maker-input mk-city-id" min="1" step="1" required></td>
+      <td><input type="number" class="ttp-maker-input mk-city-x" step="any" required></td>
+      <td><input type="number" class="ttp-maker-input mk-city-y" step="any" required></td>
+      <td><button type="button" class="btn btn-secondary mk-remove-row" title="Remove row">×</button></td>
+    </tr>
+  </template>
+
+  <template id="tpl-maker-item">
+    <tr>
+      <td><input type="number" class="ttp-maker-input mk-item-id" min="1" step="1" required></td>
+      <td><input type="number" class="ttp-maker-input mk-item-profit" min="0" step="1" required></td>
+      <td><input type="number" class="ttp-maker-input mk-item-weight" min="1" step="1" required></td>
+      <td><input type="number" class="ttp-maker-input mk-item-city" min="1" step="1" required></td>
+      <td><button type="button" class="btn btn-secondary mk-remove-row" title="Remove row">×</button></td>
+    </tr>
+  </template>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
